@@ -1,7 +1,7 @@
 name: 🐍 Pylint + 🤖 Auto Approve PR
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
