@@ -47,7 +47,7 @@ jobs:
         if: steps.has-py.outputs.no_py_files == 'false'
         run: |
           python -m pip install --upgrade pip
-          pip install pylint reviewdog
+          pip install pylint
 
       - name: 🚦 Run Pylint and comment on PR with reviewdog
         if: steps.has-py.outputs.no_py_files == 'false'
@@ -62,7 +62,6 @@ jobs:
           else
             echo "✅ No lint issues found! 🥳"
           fi
-          cat pylint.log | reviewdog -efm="%f:%l: [%t] %m" -name="🐍 Pylint Linter" -reporter=github-pr-review -filter-mode=added -fail-on-error=false
 
       - name: 🏁 Set Lint Status Output
         id: lint-status
