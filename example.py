@@ -1,0 +1,1 @@
+print("eaxmple Pythjon)
