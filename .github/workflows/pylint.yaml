@@ -1,4 +1,4 @@
-name: Pylint
+name: 🐍 Pylint Linter
 
 on:
   pull_request:
@@ -10,14 +10,15 @@ jobs:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Get list of changed Python files
+      - name: 🔍 Get changed Python files
         id: changed-files
         run: |
           files=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.py$' || true)
@@ -25,7 +26,7 @@ jobs:
           echo "$files" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Check if there are Python files to lint
+      - name: 📝 Check if Python files changed
         id: has-py
         run: |
           if [ -z "${{ steps.changed-files.outputs.files }}" ]; then
@@ -34,17 +35,39 @@ jobs:
             echo "no_py_files=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Install dependencies
+      - name: ✅ No Python files to lint, passing check! 🎉
+        if: steps.has-py.outputs.no_py_files == 'true'
+        run: echo "✨ No Python files changed in this PR. All clear! ✨"
+
+      - name: ⬆️ Install dependencies
         if: steps.has-py.outputs.no_py_files == 'false'
         run: |
           python -m pip install --upgrade pip
-          pip install pylint
+          pip install pylint reviewdog
 
-      - name: Run Pylint on changed files
+      - name: 🚦 Run Pylint and comment on PR with reviewdog
         if: steps.has-py.outputs.no_py_files == 'false'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pylint ${{ steps.changed-files.outputs.files }}
+          echo "🔎 Running Pylint on changed files: ${{ steps.changed-files.outputs.files }}"
+          pylint ${{ steps.changed-files.outputs.files }} --output-format=parseable > pylint.log || true
+          if [ -s pylint.log ]; then
+            echo "❌ Lint issues found! See comments on PR. 😿"
+            cat pylint.log
+          else
+            echo "✅ No lint issues found! 🥳"
+          fi
+          cat pylint.log | reviewdog -efm="%f:%l: [%t] %m" -name="🐍 Pylint Linter" -reporter=github-pr-review -filter-mode=added -fail-on-error=false
 
-      - name: No Python files to lint, passing check
-        if: steps.has-py.outputs.no_py_files == 'true'
-        run: echo "No Python files to lint. Skipping."
+      - name: 🏁 Lint Summary
+        if: always()
+        run: |
+          if [ "${{ steps.has-py.outputs.no_py_files }}" == "true" ]; then
+            echo "### ✅ No Python files changed. Nothing to lint! 🎉"
+          elif [ -s pylint.log ]; then
+            echo "### ❌ Pylint found issues in the changed files. 😿"
+            echo "Please check the PR review comments for details! 💬"
+          else
+            echo "### ✅ All changed Python files passed Pylint! 🥳"
+          fi
