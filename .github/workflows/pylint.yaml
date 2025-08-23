@@ -60,6 +60,14 @@ jobs:
           fi
           cat pylint.log | reviewdog -efm="%f:%l: [%t] %m" -name="🐍 Pylint Linter" -reporter=github-pr-review -filter-mode=added -fail-on-error=false
 
+      - name: 🤖 Trigger Gemini AI Review if Lint Fails
+        if: steps.has-py.outputs.no_py_files == 'false' && failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Pylint failed, triggering Gemini AI review by commenting on PR..."
+          gh pr comment ${{ github.event.pull_request.number }} --body "/gemini-review"
+
       - name: 🏁 Lint Summary
         if: always()
         run: |
