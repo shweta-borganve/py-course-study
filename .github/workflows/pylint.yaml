@@ -15,12 +15,13 @@ jobs:
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
         with:
-          python-version: ${{ matrix.python-version }}
-
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      
+      - name: 🔄 Fetch base branch
+        run: git fetch origin ${{ github.base_ref }}
+      
       - name: 🔍 Get changed Python files
         id: changed-files
         run: |
@@ -28,7 +29,7 @@ jobs:
           echo "files<<EOF" >> $GITHUB_OUTPUT
           echo "$files" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
+      
       - name: 📝 Check if Python files changed
         id: has-py
         run: |
@@ -37,7 +38,7 @@ jobs:
           else
             echo "no_py_files=false" >> $GITHUB_OUTPUT
           fi
-
+      
       - name: ✅ No Python files to lint, passing check! 🎉
         if: steps.has-py.outputs.no_py_files == 'true'
         run: echo "✨ No Python files changed in this PR. All clear! ✨"
