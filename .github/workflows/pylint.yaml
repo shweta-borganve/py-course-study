@@ -1,7 +1,7 @@
 name: 🐍 Pylint + 🤖 Auto Approve PR
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 jobs:
@@ -79,6 +79,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Pylint failed, triggering Gemini AI review by commenting on PR..."
+          echo "Current PR number: ${{ github.event.pull_request.number }}"
           gh pr comment ${{ github.event.pull_request.number }} --body "/gemini-review"
 
   auto-approve:
