@@ -1,23 +1,50 @@
 name: Pylint
 
-on: [push]
+on:
+  pull_request:
 
 jobs:
-  build:
+  pylint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-    - name: Analysing the code with pylint
-      run: |
-        pylint $(git ls-files '*.py')
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Get list of changed Python files
+        id: changed-files
+        run: |
+          files=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.py$' || true)
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$files" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Check if there are Python files to lint
+        id: has-py
+        run: |
+          if [ -z "${{ steps.changed-files.outputs.files }}" ]; then
+            echo "no_py_files=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_py_files=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        if: steps.has-py.outputs.no_py_files == 'false'
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+
+      - name: Run Pylint on changed files
+        if: steps.has-py.outputs.no_py_files == 'false'
+        run: |
+          pylint ${{ steps.changed-files.outputs.files }}
+
+      - name: No Python files to lint, passing check
+        if: steps.has-py.outputs.no_py_files == 'true'
+        run: echo "No Python files to lint. Skipping."
