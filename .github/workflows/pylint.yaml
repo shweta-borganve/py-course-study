@@ -1,7 +1,8 @@
-name: 🐍 Pylint Linter
+name: 🐍 Pylint + 🤖 Auto Approve PR
 
 on:
-  pull_request:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 jobs:
   pylint:
@@ -9,15 +10,18 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
+    outputs:
+      lint_passed: ${{ steps.lint-status.outputs.lint_passed }}
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-
-      - name: 🐍 Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
         with:
-          python-version: ${{ matrix.python-version }}
-
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      
+      - name: 🔄 Fetch base branch
+        run: git fetch origin ${{ github.base_ref }}
+      
       - name: 🔍 Get changed Python files
         id: changed-files
         run: |
@@ -25,7 +29,7 @@ jobs:
           echo "files<<EOF" >> $GITHUB_OUTPUT
           echo "$files" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
+      
       - name: 📝 Check if Python files changed
         id: has-py
         run: |
@@ -34,7 +38,7 @@ jobs:
           else
             echo "no_py_files=false" >> $GITHUB_OUTPUT
           fi
-
+      
       - name: ✅ No Python files to lint, passing check! 🎉
         if: steps.has-py.outputs.no_py_files == 'true'
         run: echo "✨ No Python files changed in this PR. All clear! ✨"
@@ -43,7 +47,7 @@ jobs:
         if: steps.has-py.outputs.no_py_files == 'false'
         run: |
           python -m pip install --upgrade pip
-          pip install pylint reviewdog
+          pip install pylint
 
       - name: 🚦 Run Pylint and comment on PR with reviewdog
         if: steps.has-py.outputs.no_py_files == 'false'
@@ -58,16 +62,35 @@ jobs:
           else
             echo "✅ No lint issues found! 🥳"
           fi
-          cat pylint.log | reviewdog -efm="%f:%l: [%t] %m" -name="🐍 Pylint Linter" -reporter=github-pr-review -filter-mode=added -fail-on-error=false
 
-      - name: 🏁 Lint Summary
+      - name: 🏁 Set Lint Status Output
+        id: lint-status
         if: always()
         run: |
-          if [ "${{ steps.has-py.outputs.no_py_files }}" == "true" ]; then
-            echo "### ✅ No Python files changed. Nothing to lint! 🎉"
-          elif [ -s pylint.log ]; then
-            echo "### ❌ Pylint found issues in the changed files. 😿"
-            echo "Please check the PR review comments for details! 💬"
+          if [ "${{ steps.has-py.outputs.no_py_files }}" == "true" ] || [ ! -s pylint.log ]; then
+            echo "lint_passed=true" >> $GITHUB_OUTPUT
           else
-            echo "### ✅ All changed Python files passed Pylint! 🥳"
+            echo "lint_passed=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: 🤖 Trigger Gemini AI Review if Lint Fails
+        if: steps.lint-status.outputs.lint_passed == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Pylint failed, triggering Gemini AI review by commenting on PR..."
+          echo "Current PR number: ${{ github.event.pull_request.number }}"
+          gh pr comment ${{ github.event.pull_request.number }} --body "/gemini-review"
+
+  auto-approve:
+    runs-on: ubuntu-latest
+    needs: pylint
+    if: needs.pylint.outputs.lint_passed == 'true'
+    permissions:
+      pull-requests: write
+    steps:
+      - name: 🤖 Auto-approve any PR
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.INFOYOUTH_PAT }}
+     
