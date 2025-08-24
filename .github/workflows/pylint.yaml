@@ -53,18 +53,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install pylint reviewdog
 
-      - name: 🚦 Run Pylint and report with Reviewdog
-        if: steps.filter.outputs.python == 'true'
+      - name: 🚦 Run Pylint
+        id: run-pylint
         run: |
-          files=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.py$')
-          echo "🔎 Linting changed files: $files"
+          files=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.py$' || true)
           if [ -z "$files" ]; then
             echo "No Python files to lint."
             exit 0
           fi
+          echo "🔎 Running Pylint on changed files: $files"
           pylint $files --output-format=parseable > pylint.log 2>&1 || true
-          # Reviewdog integration for inline PR comments
-          reviewdog -f=pylint -name="Pylint" -reporter=github-pr-review -level=error < pylint.log
+      
+          if [ -s pylint.log ]; then
+            echo "❌ Lint issues found!"
+            cat pylint.log
+          else
+            echo "✅ No lint issues found!"
+          fi
 
       # Step 6: Upload Pylint log as artifact
       - name: 📤 Upload Pylint log
