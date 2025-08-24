@@ -10,6 +10,9 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
+    permissions:
+      pull-requests: write
+      issues: write
     outputs:
       lint_passed: ${{ steps.lint-status.outputs.lint_passed }}
     steps:
@@ -49,10 +52,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install pylint
 
-      - name: 🚦 Run Pylint and comment on PR with reviewdog
+      - name: 🚦 Run Pylint
         if: steps.has-py.outputs.no_py_files == 'false'
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "🔎 Running Pylint on changed files: ${{ steps.changed-files.outputs.files }}"
           pylint ${{ steps.changed-files.outputs.files }} --output-format=parseable > pylint.log || true
@@ -67,6 +68,7 @@ jobs:
         id: lint-status
         if: always()
         run: |
+          touch pylint.log
           if [ "${{ steps.has-py.outputs.no_py_files }}" == "true" ] || [ ! -s pylint.log ]; then
             echo "lint_passed=true" >> $GITHUB_OUTPUT
           else
@@ -93,4 +95,3 @@ jobs:
         uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.INFOYOUTH_PAT }}
-     
