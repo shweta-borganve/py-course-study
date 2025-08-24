@@ -64,7 +64,7 @@ jobs:
         if: steps.has-py.outputs.no_py_files == 'false'
         run: |
           echo "🔎 Running Pylint on changed files: ${{ steps.changed-files.outputs.files }}"
-          pylint ${{ steps.changed-files.outputs.files }} --output-format=parseable > pylint.log
+          pylint ${{ steps.changed-files.outputs.files }} --output-format=parseable > pylint.log 2>&1
           if [ -s pylint.log ]; then
             echo "❌ Lint issues found!"
             cat pylint.log
