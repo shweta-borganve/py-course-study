@@ -1,13 +1,1 @@
-name: 🤖 Auto Approve PR
 
-on:
-  pull_request_target:
-
-jobs:
-  auto-approve:
-    runs-on: ubuntu-24.04
-    permissions:
-      pull-requests: write
-    steps:
-      - name: 🤖 Auto-approve any PR
-        uses: hmarr/auto-approve-action@v4
