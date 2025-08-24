@@ -23,6 +23,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
+          persist-credentials: false   # safer with forks
 
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
@@ -82,7 +83,6 @@ jobs:
             echo "lint_passed=false" >> $GITHUB_OUTPUT
           fi
 
-  # Aggregate job to decide
   lint-aggregate:
     runs-on: ubuntu-latest
     needs: pylint
@@ -92,13 +92,15 @@ jobs:
       - name: Check matrix results
         id: check
         run: |
-          echo "all_passed=true" >> $GITHUB_OUTPUT
+          all_passed=true
           for job in ${{ toJson(needs.pylint) }}; do
-            if [ "$(echo $job | jq -r '.outputs.lint_passed')" != "true" ]; then
-              echo "all_passed=false" >> $GITHUB_OUTPUT
+            passed=$(echo "$job" | jq -r '.outputs.lint_passed')
+            if [ "$passed" != "true" ]; then
+              all_passed=false
               break
             fi
           done
+          echo "all_passed=$all_passed" >> $GITHUB_OUTPUT
 
       - name: 🤖 Trigger Gemini AI Review if any failed
         if: steps.check.outputs.all_passed == 'false'
@@ -115,7 +117,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - name: 🤖 Auto-approve any PR
+      - name: 🤖 Auto-approve PR
         uses: hmarr/auto-approve-action@v4
         with:
           github-token: ${{ secrets.INFOYOUTH_PAT }}
