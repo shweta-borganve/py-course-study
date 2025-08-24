@@ -68,7 +68,6 @@ jobs:
           if [ -s pylint.log ]; then
             echo "❌ Lint issues found!"
             cat pylint.log
-            exit 1  # Step fails here
           else
             echo "✅ No lint issues found!"
           fi
@@ -119,11 +118,16 @@ jobs:
   auto-approve:
     runs-on: ubuntu-latest
     needs: lint-aggregate
-    if: needs.lint-aggregate.outputs.all_passed == 'true'
     permissions:
       pull-requests: write
     steps:
-      - name: 🤖 Auto-approve PR
-        uses: hmarr/auto-approve-action@v4
-        with:
-          github-token: ${{ secrets.INFOYOUTH_PAT }}
+      - name: 🤖 Auto-approve or fail
+        run: |
+          if [ "${{ needs.lint-aggregate.outputs.all_passed }}" != "true" ]; then
+            echo "❌ Lint failed in at least one Python version. Skipping auto-approve."
+            exit 1
+          else
+            echo "✅ All lint checks passed. Auto-approving PR..."
+            gh pr review ${{ github.event.pull_request.number }} --approve --body "Auto-approved"
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFOYOUTH_PAT }}
