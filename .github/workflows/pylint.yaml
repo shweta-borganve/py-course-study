@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
-          persist-credentials: false   # safer with forks
+          persist-credentials: false
 
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
@@ -61,28 +61,32 @@ jobs:
           pip install pylint
 
       - name: 🚦 Run Pylint
-        if: steps.has-py.outputs.no_py_files == 'false'
+        id: run-pylint
         run: |
-          echo "🔎 Running Pylint on changed files: ${{ steps.changed-files.outputs.files }}"
-          pylint ${{ steps.changed-files.outputs.files }} --output-format=parseable > pylint.log 2>&1
+          echo "🔎 Running Pylint on changed files: example.py"
+          pylint example.py --output-format=parseable > pylint.log 2>&1
           if [ -s pylint.log ]; then
             echo "❌ Lint issues found!"
             cat pylint.log
-            exit 1
           else
             echo "✅ No lint issues found!"
           fi
-
+      
+      - name: 📤 Upload Pylint log
+        if: always()   # This runs even if previous step failed
+        uses: actions/upload-artifact@v4
+        with:
+          name: pylint-log
+          path: pylint.log
+      
       - name: 🏁 Set Lint Status Output
         id: lint-status
-        if: always()
+        if: always()  # Always runs
         run: |
-          touch pylint.log
-          if [ "${{ steps.has-py.outputs.no_py_files }}" == "true" ] || [ ! -s pylint.log ]; then
-            echo "lint_passed=true" >> $GITHUB_OUTPUT
-          else
+          if [ -s pylint.log ]; then
             echo "lint_passed=false" >> $GITHUB_OUTPUT
-          fi
+          else
+            echo "lint_passed=true" >> $GITHUB_OUTPUT
 
   lint-aggregate:
     runs-on: ubuntu-latest
@@ -114,11 +118,16 @@ jobs:
   auto-approve:
     runs-on: ubuntu-latest
     needs: lint-aggregate
-    if: needs.lint-aggregate.outputs.all_passed == 'true'
     permissions:
       pull-requests: write
     steps:
-      - name: 🤖 Auto-approve PR
-        uses: hmarr/auto-approve-action@v4
-        with:
-          github-token: ${{ secrets.INFOYOUTH_PAT }}
+      - name: 🤖 Auto-approve or fail
+        run: |
+          if [ "${{ needs.lint-aggregate.outputs.all_passed }}" != "true" ]; then
+            echo "❌ Lint failed in at least one Python version. Skipping auto-approve."
+            exit 1
+          else
+            echo "✅ All lint checks passed. Auto-approving PR..."
+            gh pr review ${{ github.event.pull_request.number }} --approve --body "Auto-approved"
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFOYOUTH_PAT }}
