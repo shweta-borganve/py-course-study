@@ -78,12 +78,11 @@ jobs:
       - name: 🤖 Trigger Gemini AI Review if Lint Fails
         if: steps.lint-status.outputs.lint_passed == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Pylint failed, triggering Gemini AI review by commenting on PR..."
           echo "Current PR number: ${{ github.event.pull_request.number }}"
           gh pr comment ${{ github.event.pull_request.number }} --body "/gemini-review"
-
   auto-approve:
     runs-on: ubuntu-latest
     needs: pylint
