@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
 
     steps:
-      # Step 1: Checkout PR branch
+      # 1️⃣ Checkout the PR branch
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
@@ -26,69 +26,58 @@ jobs:
           ref: ${{ github.head_ref }}
           persist-credentials: false
 
-      # Step 2: Setup Python
+      # 2️⃣ Setup Python
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Step 3: Detect changed Python files using paths-filter
-      - name: 🔍 Detect changed Python files
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            python:
-              - '**/*.py'
-
-      # Step 4: Skip lint if no Python files changed
-      - name: ✅ No Python files changed
-        if: steps.filter.outputs.python == 'false'
-        run: echo "✨ No Python files changed in this PR. Skipping lint."
-
-      # Step 5: Install dependencies and run Pylint
-      - name: 🐍 Install dependencies
-        if: steps.filter.outputs.python == 'true'
+      # 3️⃣ Install dependencies
+      - name: ⬆️ Install Pylint and Reviewdog
         run: |
           python -m pip install --upgrade pip
           pip install pylint reviewdog
 
-      - name: 🚦 Run Pylint
-        id: run-pylint
+      # 4️⃣ Detect changed Python files reliably
+      - name: 🔍 Detect changed Python files
+        id: detect
         run: |
-          files=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.py$' || true)
+          # Get all changed Python files in the PR compared to base branch
+          files=$(git fetch origin ${{ github.base_ref }} && \
+                  git diff --name-only origin/${{ github.base_ref }}...${{ github.head_ref }} | grep '\.py$' || true)
           if [ -z "$files" ]; then
-            echo "No Python files to lint."
-            exit 0
-          fi
-          echo "🔎 Running Pylint on changed files: $files"
-          pylint $files --output-format=parseable > pylint.log 2>&1 || true
-      
-          if [ -s pylint.log ]; then
-            echo "❌ Lint issues found!"
-            cat pylint.log
+            echo "no_python_files=true" >> $GITHUB_OUTPUT
           else
-            echo "✅ No lint issues found!"
+            echo "no_python_files=false" >> $GITHUB_OUTPUT
+            echo "files=$files" >> $GITHUB_OUTPUT
           fi
 
-      # Step 6: Upload Pylint log as artifact
-      - name: 📤 Upload Pylint log
-        if: steps.filter.outputs.python == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pylint-log
-          path: pylint.log
+      # 5️⃣ Skip lint if no Python files
+      - name: ✅ Skip lint if no Python files
+        if: steps.detect.outputs.no_python_files == 'true'
+        run: echo "✨ No Python files changed. Skipping lint."
 
-      # Step 7: Auto-approve PR if lint passes
-      - name: 🤖 Auto-approve PR if lint passed
-        if: steps.filter.outputs.python == 'true' && success()
+      # 6️⃣ Run Pylint with Reviewdog
+      - name: 🚦 Run Pylint + Reviewdog
+        if: steps.detect.outputs.no_python_files == 'false'
         run: |
-          # Check if pylint.log contains errors
+          set +e  # disable exit-on-error
+          echo "🔎 Linting changed files:"
+          echo "${{ steps.detect.outputs.files }}"
+          pylint ${{ steps.detect.outputs.files }} --output-format=parseable > pylint.log 2>&1 || true
+
+          # Reviewdog posts inline comments in PR
+          reviewdog -f=pylint -name="Pylint" -reporter=github-pr-review -level=error < pylint.log
+
+      # 7️⃣ Auto-approve if no lint issues
+      - name: 🤖 Auto-approve PR
+        if: steps.detect.outputs.no_python_files == 'false' && success()
+        run: |
           if [ -s pylint.log ]; then
             echo "❌ Lint errors detected. Skipping auto-approve."
             exit 1
           else
-            echo "✅ No lint issues. Auto-approving PR..."
+            echo "✅ Lint passed. Auto-approving PR..."
             gh pr review ${{ github.event.pull_request.number }} --approve --body "Auto-approved"
         env:
           GITHUB_TOKEN: ${{ secrets.INFOYOUTH_PAT }}
