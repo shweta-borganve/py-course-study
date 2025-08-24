@@ -4,15 +4,17 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   pylint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
-    permissions:
-      pull-requests: write
-      issues: write
     outputs:
       lint_passed: ${{ steps.lint-status.outputs.lint_passed }}
     steps:
@@ -21,10 +23,15 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
-      
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
       - name: 🔄 Fetch base branch
         run: git fetch origin ${{ github.base_ref }}
-      
+
       - name: 🔍 Get changed Python files
         id: changed-files
         run: |
@@ -32,7 +39,7 @@ jobs:
           echo "files<<EOF" >> $GITHUB_OUTPUT
           echo "$files" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+
       - name: 📝 Check if Python files changed
         id: has-py
         run: |
@@ -41,8 +48,8 @@ jobs:
           else
             echo "no_py_files=false" >> $GITHUB_OUTPUT
           fi
-      
-      - name: ✅ No Python files to lint, passing check! 🎉
+
+      - name: ✅ No Python files to lint
         if: steps.has-py.outputs.no_py_files == 'true'
         run: echo "✨ No Python files changed in this PR. All clear! ✨"
 
@@ -58,10 +65,10 @@ jobs:
           echo "🔎 Running Pylint on changed files: ${{ steps.changed-files.outputs.files }}"
           pylint ${{ steps.changed-files.outputs.files }} --output-format=parseable > pylint.log || true
           if [ -s pylint.log ]; then
-            echo "❌ Lint issues found! See comments on PR. 😿"
+            echo "❌ Lint issues found!"
             cat pylint.log
           else
-            echo "✅ No lint issues found! 🥳"
+            echo "✅ No lint issues found!"
           fi
 
       - name: 🏁 Set Lint Status Output
@@ -75,17 +82,36 @@ jobs:
             echo "lint_passed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: 🤖 Trigger Gemini AI Review if Lint Fails
-        if: steps.lint-status.outputs.lint_passed == 'false'
-        uses: peter-evans/create-or-update-comment@v4.0.0
+  # Aggregate job to decide
+  lint-aggregate:
+    runs-on: ubuntu-latest
+    needs: pylint
+    outputs:
+      all_passed: ${{ steps.check.outputs.all_passed }}
+    steps:
+      - name: Check matrix results
+        id: check
+        run: |
+          echo "all_passed=true" >> $GITHUB_OUTPUT
+          for job in ${{ toJson(needs.pylint) }}; do
+            if [ "$(echo $job | jq -r '.outputs.lint_passed')" != "true" ]; then
+              echo "all_passed=false" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
+
+      - name: 🤖 Trigger Gemini AI Review if any failed
+        if: steps.check.outputs.all_passed == 'false'
+        uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: "/gemini-review"
           token: ${{ secrets.GITHUB_TOKEN }}
+
   auto-approve:
     runs-on: ubuntu-latest
-    needs: pylint
-    if: needs.pylint.outputs.lint_passed == 'true'
+    needs: lint-aggregate
+    if: needs.lint-aggregate.outputs.all_passed == 'true'
     permissions:
       pull-requests: write
     steps:
