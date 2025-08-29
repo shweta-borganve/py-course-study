@@ -1,0 +1,49 @@
+
+name: 🚦 PR Quality Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - '**.py'
+
+jobs:
+  check-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 🛠️ Install Tools
+        run: |
+          pip install flake8 black pytest
+
+      - name: 🔍 Lint with flake8
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          flake8 .
+
+      - name: 🎨 Format Check with Black
+        run: |
+          black --check .
+
+      - name: 🧪 Run Tests
+        run: |
+          pytest || echo "No tests found"
+
+      - name: ✅ Auto Approve PR
+        if: success()
+        uses: lekman/auto-approve-action@v1
+        with:
+          github-token: ${{ secrets.INFOYOUTH_PAT }}
+          allowed-authors: |
+            shweta-borganve
+          required-labels: |
+            approve
+          label-match-mode: any

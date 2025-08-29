@@ -1,0 +1,231 @@
+name: 🧐 PR Review
+
+# =============================================================
+# WORKFLOW: Gemini CLI - Pull Request and Issue Review
+# =============================================================
+# This workflow uses Gemini CLI to review code in PRs and issues.
+#
+# What it does:
+# - Automatically analyzes new or updated PRs.
+# - Responds to @gemini-cli /review commands in PRs and issues.
+# - Extracts diffs and provides detailed code feedback.
+# - Suggests improvements, detects potential bugs, and validates best practices.
+# =============================================================
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  pull_request_review_comment:
+    types: [created]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to review"
+        required: false
+        type: string
+      issue_number:
+        description: "Issue number to review"
+        required: false
+        type: string
+
+jobs:
+  review:
+    name: Review PR/Issue with Gemini
+    runs-on: ubuntu-latest
+
+  # ----------------------------------------------------------------------
+  # EXECUTION CONDITION (if):
+  # Only executes the job if at least one of these conditions is met:
+  # 1. It's a PR event (automatic)
+  # 2. Manual execution (workflow_dispatch)
+  # 3. @gemini-cli /review command in PR comments
+  # 4. @gemini-cli /review command in issues (to review mentioned code)
+  # 5. @gemini-cli /review command in normal issue comments
+  # ----------------------------------------------------------------------
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request_review_comment' && 
+       contains(github.event.comment.body, '@gemini-cli') && 
+       contains(github.event.comment.body, '/review')) ||
+      (github.event_name == 'issue_comment' && 
+       github.event.issue.pull_request != null &&
+       contains(github.event.comment.body, '@gemini-cli') && 
+       contains(github.event.comment.body, '/review')) ||
+      (github.event_name == 'issue_comment' && 
+       github.event.issue.pull_request == null &&
+       contains(github.event.comment.body, '@gemini-cli') && 
+       contains(github.event.comment.body, '/review'))
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      issues: 'write'
+      pull-requests: 'write'
+      statuses: 'write'
+
+  # ----------------------------------------------------------------------
+  # PERMISSIONS:
+  # - contents:read        → Read code for analysis
+  # - id-token:write       → Useful for exchanging credentials or tokens (OIDC)
+  # - issues:write         → To comment on issues when /review is used
+  # - pull-requests:write  → To comment on PRs and create issues if necessary
+  # - statuses:write       → Allow reporting checks/status to the PR
+  # ----------------------------------------------------------------------
+
+    steps:
+      - name: Checkout code
+        # Essential step: get the PR's code to extract diffs and analyze.
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        # Step: build a limited summary (up to 10 files) with patch fragments.
+        # This is then passed to the prompt for Gemini to review the most relevant changes.
+        id: get-diff
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request?.number || 
+                           context.payload.inputs?.pr_number ||
+                           (context.payload.issue?.pull_request ? context.payload.issue.number : null);
+            
+            if (prNumber) {
+              try {
+                const { data: files } = await github.rest.pulls.listFiles({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber
+                });
+                
+                let diffContent = "**MODIFIED FILES:**\n\n";
+                
+                for (const file of files.slice(0, 10)) { // Limit to 10 files
+                  diffContent += `### 📄 ${file.filename}\n`;
+                  diffContent += `**Status**: ${file.status}\n`;
+                  diffContent += `**Changes**: +${file.additions} -${file.deletions}\n\n`;
+                  
+                  if (file.patch) {
+                    diffContent += "```diff\n";
+                    diffContent += file.patch.substring(0, 2000); // Limit size
+                    diffContent += "\n```\n\n";
+                  }
+                }
+                
+                return diffContent;
+              } catch (error) {
+                return "❌ Error getting PR diff: " + error.message;
+              }
+            }
+            return "❌ Could not determine PR number";
+
+      - name: Run Gemini CLI for Review
+        # Step: send the summarized diff to Gemini to get structured comments
+        id: gemini-review
+        uses: google-github-actions/run-gemini-cli@v0.1.10
+        with:
+          prompt: |
+            You are an expert and experienced code reviewer.
+
+            **PULL REQUEST TO REVIEW:**
+            Title: ${{ github.event.pull_request.title || 'PR from comment' }}
+            Description: ${{ github.event.pull_request.body || 'See comments for context' }}
+            
+            **PR CODE:**
+            ${{ steps.get-diff.outputs.result }}
+
+            Your task is to perform a concise review of the Pull Request, focusing on:
+
+            🧠 **Code Quality**: Structure, naming, readability  
+            🧪 **Best Practices**: Pythonic style, modularity, conventions  
+            ✅ **Functionality**: Correct logic, expected behavior  
+            💡 **Suggestions**: Simple tips to improve or learn from
+            
+            Use these priority emojis for feedback:
+            - 🔴 **Must Fix**: Critical issues
+            - 🟠 **Recommended**: Helpful improvements
+            - 🟢 **Nice to Have**: Optional tips or enhancements
+            
+            📏 **Keep your review under 300 words**. Focus on clarity and learning value.
+            
+            ---
+            
+            ## 🔍 Code Review
+            
+            ### ✅ Good Practices
+            - [Highlight clean code, smart use of Python features, etc.]
+            
+            ### 🧠 Code Quality
+            - [Notes on structure, naming, readability]
+            
+            ### ✅ Functionality
+            - [Does the code work as expected? Any logic issues?]
+            
+            ### 💡 Suggestions
+            
+            #### 🔴 Must Fix
+            - [Critical issues that block merge]
+            
+            #### 🟠 Recommended
+            - [Improvements that enhance quality]
+            
+            #### 🟢 Nice to Have
+            - [Optional enhancements or learning tips]
+            
+            ### 🎯 Verdict
+            - [ ] ✅ Looks good – ready to merge  
+            - [ ] 🔄 Minor changes suggested  
+            - [ ] ⛔ Needs fixes before merge
+            
+            Respond in simple English, be constructive, and keep feedback short and helpful.
+
+
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Comment review on PR
+        # Step: publish the review generated by Gemini as a comment on the PR.
+        if: success()
+        uses: actions/github-script@v7
+        env:
+          GEMINI_RESPONSE: ${{ steps.gemini-review.outputs.summary }}
+        with:
+          script: |
+            const prNumber = context.payload.pull_request?.number || 
+                           context.payload.inputs?.pr_number ||
+                           (context.payload.issue?.pull_request ? context.payload.issue.number : null);
+
+            if (prNumber) {
+              const geminiResponse = process.env.GEMINI_RESPONSE || 'Could not retrieve Gemini response.';
+              
+              // Comment the review
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `🤖 **Automated Review by Gemini CLI**\n\n${geminiResponse}`
+              });
+              
+              console.log(`Review commented on PR #${prNumber}`);
+            }
+
+      - name: Comment on error
+        # Step: in case of failure, comment with a link to logs for easier debugging.
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request?.number || 
+                           context.payload.inputs?.pr_number ||
+                           (context.payload.issue?.pull_request ? context.payload.issue.number : null);
+                           
+            if (prNumber) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: '❌ Error reviewing the PR. [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+              });
+            }
