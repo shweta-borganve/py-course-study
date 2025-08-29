@@ -39,7 +39,8 @@ jobs:
         if: success()
         uses: lekman/auto-approve-action@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}          
+          github-token: ${{ secrets.INFOYOUTH_PAT }}          
           allowed-authors: |
-            infoyouth
+            shweta-borganve
+          label-match-mode: any
 
