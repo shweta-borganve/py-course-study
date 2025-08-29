@@ -1,5 +1,1 @@
-print("eaxmple Pythjon)
-      if not true:
-print(false)
-
-
+print("Hello, World!")
