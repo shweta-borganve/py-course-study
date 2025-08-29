@@ -137,58 +137,51 @@ jobs:
             **PR CODE:**
             ${{ steps.get-diff.outputs.result }}
 
-            Your task is to perform a comprehensive review of the Pull Request, focusing on:
+            Your task is to perform a concise review of the Pull Request, focusing on:
 
-            🔒 **Security**: Vulnerabilities, input validation, authentication
-            ⚡ **Performance**: Efficient algorithms, optimized queries, memory usage
-            🛡️ **Reliability**: Error handling, edge cases, testing
-            🧹 **Maintainability**: Clean code, documentation, conventions
-            ✅ **Functionality**: Correct logic, requirement compliance
-
-            Provide specific feedback using these priority emojis:
-            🔴 **Critical**: Must be fixed before merge
-            🟠 **High**: Should be fixed
-            🟡 **Medium**: Recommended improvements
-            🟢 **Low**: Optional suggestions
-
-            **Response format**:
-
+            🧠 **Code Quality**: Structure, naming, readability  
+            🧪 **Best Practices**: Pythonic style, modularity, conventions  
+            ✅ **Functionality**: Correct logic, expected behavior  
+            💡 **Suggestions**: Simple tips to improve or learn from
+            
+            Use these priority emojis for feedback:
+            - 🔴 **Must Fix**: Critical issues
+            - 🟠 **Recommended**: Helpful improvements
+            - 🟢 **Nice to Have**: Optional tips or enhancements
+            
+            📏 **Keep your review under 300 words**. Focus on clarity and learning value.
+            
+            ---
+            
             ## 🔍 Code Review
-
-            ### ✅ Positive Aspects
-            - [Highlight good practices found]
-
-            ### 🔍 Analysis by Category
-
-            #### 🔒 Security
-            [Security evaluation]
-
-            #### ⚡ Performance
-            [Performance evaluation]
-
-            #### 🛡️ Reliability
-            [Reliability evaluation]
-
-            #### 🧹 Maintainability
-            [Maintainability evaluation]
-
-            ### 📋 Recommendations
-
-            #### 🔴 Critical
-            - [Issues that must be fixed]
-
-            #### 🟠 Important
-            - [Recommended improvements]
-
-            #### 🟡 Suggestions
-            - [Optional improvements]
-
+            
+            ### ✅ Good Practices
+            - [Highlight clean code, smart use of Python features, etc.]
+            
+            ### 🧠 Code Quality
+            - [Notes on structure, naming, readability]
+            
+            ### ✅ Functionality
+            - [Does the code work as expected? Any logic issues?]
+            
+            ### 💡 Suggestions
+            
+            #### 🔴 Must Fix
+            - [Critical issues that block merge]
+            
+            #### 🟠 Recommended
+            - [Improvements that enhance quality]
+            
+            #### 🟢 Nice to Have
+            - [Optional enhancements or learning tips]
+            
             ### 🎯 Verdict
-            - [ ] ✅ Approved - Ready for merge
-            - [ ] 🔄 Needs minor changes
-            - [ ] ⛔ Requires significant changes
+            - [ ] ✅ Looks good – ready to merge  
+            - [ ] 🔄 Minor changes suggested  
+            - [ ] ⛔ Needs fixes before merge
+            
+            Respond in simple English, be constructive, and keep feedback short and helpful.
 
-            Respond in English, be constructive, and provide code examples when useful.
 
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
 
