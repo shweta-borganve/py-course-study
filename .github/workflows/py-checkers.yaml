@@ -3,6 +3,7 @@ name: 🚦 PR Quality Check
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - '**.py'
 
