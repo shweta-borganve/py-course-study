@@ -1,3 +1,1 @@
 print("eaxmple Pythjon")
-
-
