@@ -42,5 +42,7 @@ jobs:
           github-token: ${{ secrets.INFOYOUTH_PAT }}          
           allowed-authors: |
             shweta-borganve
+          required-labels: |
+            approve
           label-match-mode: any
 
