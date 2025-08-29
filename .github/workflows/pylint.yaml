@@ -40,6 +40,6 @@ jobs:
         uses: lekman/auto-approve-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}          
-          llowed-authors: |
+          allowed-authors: |
             infoyouth
 
