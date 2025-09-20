@@ -186,9 +186,11 @@ jobs:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Fail if "Must Fix" is found 🛑
-        if: contains(steps.gemini-review.outputs.summary, '🔴')
+        if: |
+          contains(steps.gemini-review.outputs.summary, '🔴 Must Fix') &&
+          !contains(steps.gemini-review.outputs.summary, '🔴 Must Fix\n- None.')
         run: |
-          echo "You 'Must Fix' issue. Failing the PR."
+          echo "Gemini review found a 'Must Fix' issue. Failing the PR."
           exit 1
           
       - name: Comment review on PR
