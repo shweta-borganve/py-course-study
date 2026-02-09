@@ -13,12 +13,7 @@ name: 🧐 PR Review
 # =============================================================
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-  pull_request_review_comment:
-    types: [created]
-  issue_comment:
-    types: [created]
+  # WORKFLOW DISABLED
   workflow_dispatch:
     inputs:
       pr_number:
@@ -125,7 +120,7 @@ jobs:
       - name: Run Gemini CLI for Review
         # Step: send the summarized diff to Gemini to get structured comments
         id: gemini-review
-        uses: google-github-actions/run-gemini-cli@v0.1.10
+        uses: google-github-actions/run-gemini-cli@v0.1.20
         with:
           prompt: |
             You are an expert and experienced code reviewer.
