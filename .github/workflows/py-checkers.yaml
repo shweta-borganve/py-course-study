@@ -39,9 +39,7 @@ jobs:
             echo "No Python files changed"
             exit 0
           fi
-          pylint $CHANGED_PY_FILES --disable=all --enable=E,F || EXIT_CODE=$?
-          exit ${EXIT_CODE:-0}
-        continue-on-error: true
+          pylint $CHANGED_PY_FILES --disable=all --enable=E,F
 
       - name: ⚡ Fast Linting with Ruff
         id: ruff
@@ -51,9 +49,7 @@ jobs:
             echo "No Python files changed"
             exit 0
           fi
-          ruff check $CHANGED_PY_FILES || EXIT_CODE=$?
-          exit ${EXIT_CODE:-0}
-        continue-on-error: true
+          ruff check $CHANGED_PY_FILES
 
       - name: 🎨 Format Check with Black
         id: black
@@ -63,13 +59,12 @@ jobs:
             echo "No Python files changed"
             exit 0
           fi
-          black --check $CHANGED_PY_FILES || EXIT_CODE=$?
-          exit ${EXIT_CODE:-0}
-        continue-on-error: true
+          black --check $CHANGED_PY_FILES
 
       - name: 💬 Comment on PR if Issues Found
         if: failure()
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
