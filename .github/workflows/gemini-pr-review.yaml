@@ -13,12 +13,7 @@ name: 🧐 PR Review
 # =============================================================
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
-  pull_request_review_comment:
-    types: [created]
-  issue_comment:
-    types: [created]
+  # WORKFLOW DISABLED
   workflow_dispatch:
     inputs:
       pr_number:
