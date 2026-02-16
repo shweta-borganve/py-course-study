@@ -55,10 +55,10 @@ def ask_question(q):
             print("Please enter a number.")
 
     if answer == q["correct"]:
-        print("Correct")
+        print("Correct ✅")
         return True
     else:
-        print("Incorrect")
+        print("Incorrect ❌")
         correct_answer = q["options"][q["correct"]]
         print("Correct answer is:", correct_answer)
         return False
