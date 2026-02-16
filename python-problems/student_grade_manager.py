@@ -1,4 +1,14 @@
-# Student Grade Management Program
+"""
+Student Grade Management Program
+
+This program allows the user to:
+1. Add students with grades
+2. View all students
+3. Calculate average grade
+4. Find highest grade
+5. Find lowest grade
+6. Exit the program
+"""
 
 # Dictionary to store student name and grade
 grades = {}

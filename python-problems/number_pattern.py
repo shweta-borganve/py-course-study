@@ -1,3 +1,14 @@
+"""
+number_pattern.py
+
+This program takes a number N from the user and displays
+different number patterns based on the user's choice:
+1 - Ascending (1 to N)
+2 - Descending (N to 1)
+3 - Reverse using while loop
+4 - Multiplication table
+"""
+
 N = int(input("Enter a number N: "))
 
 print("\nChoose pattern:")

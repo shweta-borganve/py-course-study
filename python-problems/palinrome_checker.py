@@ -1,4 +1,7 @@
-# Palindrome Checker Program
+"""
+Palindrome Checker Program
+This program checks whether a given word or sentence is a palindrome.
+"""
 
 # Step 1: Ask user to enter a word or sentence
 text = input("Enter a word or sentence: ")
