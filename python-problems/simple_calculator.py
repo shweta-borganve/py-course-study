@@ -1,3 +1,8 @@
+"""
+Simple Calculator Program
+This program performs basic arithmetic operations:
+addition, subtraction, multiplication, and division.
+"""
 # Simple Calculator
 
 num1 = float(input("Enter first number: "))
