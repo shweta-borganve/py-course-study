@@ -8,7 +8,6 @@ different number patterns based on the user's choice:
 3 - Reverse using while loop
 4 - Multiplication table
 """
-
 N = int(input("Enter a number N: "))
 
 print("\nChoose pattern:")
