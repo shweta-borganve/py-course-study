@@ -1,7 +1,12 @@
-text = "python"
-print(text[0:3])
-print(text[:4])
-print(text[-1])
+"""
+This module demonstrates different string slicing operations in Python.
+"""
 
-print(text[::-1])
-print(text[0:6:2])
+TEXT = "python"
+
+print(TEXT[0:3])
+print(TEXT[:4])
+print(TEXT[-1])
+
+print(TEXT[::-1])
+print(TEXT[0:6:2])
