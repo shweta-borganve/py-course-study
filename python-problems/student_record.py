@@ -74,7 +74,7 @@ def update_student():
 
     with open(FILENAME, "w", encoding="utf-8") as file:
         for line in lines:
-            name, age, grade = line.strip().split(",")
+            name, age, _ = line.strip().split(",")  # FIXED HERE
             if name.lower() == update_name.lower():
                 file.write(f"{name},{age},{new_grade}\n")
                 updated = True
