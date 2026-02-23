@@ -1,15 +1,30 @@
-a = 10
-b = 20
-print(a > 5 and b > 15)
+"""
+Program to demonstrate logical operators in Python.
+"""
 
-a = 10
-b = 20
-print(a > 50 or b > 15)
 
-a = 10
-print(not (a > 5))
+def demonstrate_logical_operators():
+    """Demonstrates AND, OR, and NOT logical operators."""
 
-age = 22
-has_id = True
+    # AND operator
+    a_value = 10
+    b_value = 20
+    print(a_value > 5 and b_value > 15)
 
-print(age >= 18 and has_id)
+    # OR operator
+    a_value = 10
+    b_value = 20
+    print(a_value > 50 or b_value > 15)
+
+    # NOT operator
+    a_value = 10
+    print(a_value <= 5)
+
+    # Real-world example
+    age = 22
+    has_id = True
+    print(age >= 18 and has_id)
+
+
+if __name__ == "__main__":
+    demonstrate_logical_operators()
