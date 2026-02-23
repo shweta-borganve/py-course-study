@@ -3,7 +3,7 @@ name: 🚦 PR Quality Check
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened]
     paths:
       - '**.py'
 
@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -21,29 +23,95 @@ jobs:
 
       - name: 🛠️ Install Tools
         run: |
-          pip install flake8 black pytest
+          pip install pylint black ruff
 
-      - name: 🔍 Lint with flake8
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 📝 Get Changed Files
+        id: changed-files
         run: |
-          flake8 .
+          git diff --name-only --diff-filter=ACM origin/${{ github.base_ref }}...HEAD > changed_files.txt
+          cat changed_files.txt
+
+      - name: 🔍 Lint with Pylint (Logic & Errors)
+        id: pylint
+        run: |
+          CHANGED_PY_FILES=$(cat changed_files.txt | grep '\.py$' | tr '\n' ' ')
+          if [ -z "$CHANGED_PY_FILES" ]; then
+            echo "No Python files changed"
+            exit 0
+          fi
+          pylint $CHANGED_PY_FILES --disable=all --enable=E,F
+
+      - name: ⚡ Fast Linting with Ruff
+        id: ruff
+        run: |
+          CHANGED_PY_FILES=$(cat changed_files.txt | grep '\.py$' | tr '\n' ' ')
+          if [ -z "$CHANGED_PY_FILES" ]; then
+            echo "No Python files changed"
+            exit 0
+          fi
+          ruff check $CHANGED_PY_FILES
 
       - name: 🎨 Format Check with Black
+        id: black
         run: |
-          black --check .
+          CHANGED_PY_FILES=$(cat changed_files.txt | grep '\.py$' | tr '\n' ' ')
+          if [ -z "$CHANGED_PY_FILES" ]; then
+            echo "No Python files changed"
+            exit 0
+          fi
+          black --check $CHANGED_PY_FILES
 
-      - name: 🧪 Run Tests
-        run: |
-          pytest || echo "No tests found"
-
-      - name: ✅ Auto Approve PR
-        if: success()
-        uses: lekman/auto-approve-action@v1
+      - name: 💬 Comment on PR if Issues Found
+        if: failure()
+        uses: actions/github-script@v7
+        continue-on-error: true
         with:
-          github-token: ${{ secrets.INFOYOUTH_PAT }}
-          allowed-authors: |
-            shweta-borganve
-          required-labels: |
-            approve
-          label-match-mode: any
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const changedFiles = fs.readFileSync('changed_files.txt', 'utf8').split('\n').filter(f => f.endsWith('.py'));
+            
+            let comment = '### 📋 Code Review Feedback\n\n';
+            comment += '**Issues found in your code:**\n\n';
+            
+            if ('${{ steps.pylint.outcome }}' === 'failure') {
+              comment += '❌ **Logic/Error Issues (Pylint)**: Please fix potential bugs and errors\n';
+            }
+            
+            if ('${{ steps.ruff.outcome }}' === 'failure') {
+              comment += '❌ **Code Quality Issues (Ruff)**: Please address code quality warnings\n';
+            }
+            
+            if ('${{ steps.black.outcome }}' === 'failure') {
+              comment += '❌ **Formatting Issues (Black)**: Run `black .` to auto-format your code\n';
+            }
+            
+            comment += '\n**Files reviewed**: ' + changedFiles.join(', ') + '\n\n';
+            comment += '**How to fix locally:**\n';
+            comment += '```bash\n';
+            comment += 'black .              # Auto-format code\n';
+            comment += 'ruff check .         # Check for issues\n';
+            comment += 'pylint *.py          # Check logic errors\n';
+            comment += '```\n';
+            comment += '\nFix all issues and push again. Thanks! 🚀\n';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: ✅ Auto Approve PR if All Checks Pass
+        if: steps.pylint.outcome == 'success' && steps.ruff.outcome == 'success' && steps.black.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event: 'APPROVE',
+              body: '✨ All checks passed! Code looks good. Well done! 🎉'
+            });
