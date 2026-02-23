@@ -1,27 +1,36 @@
+"""
+Student Record Management System.
+
+This module allows users to add, display, search,
+update, and delete student records stored in a text file.
+"""
+
 import os
 
 FILENAME = "students.txt"
 
+
 # Create file if it does not exist
 if not os.path.exists(FILENAME):
-    open(FILENAME, "w").close()
+    with open(FILENAME, "w", encoding="utf-8"):
+        pass
 
 
-# Add Student
 def add_student():
+    """Add a new student record to the file."""
     name = input("Enter student name: ")
     age = input("Enter age: ")
     grade = input("Enter grade: ")
 
-    with open(FILENAME, "a") as file:
+    with open(FILENAME, "a", encoding="utf-8") as file:
         file.write(f"{name},{age},{grade}\n")
 
     print("Student added successfully!\n")
 
 
-# Display All Students
 def display_students():
-    with open(FILENAME, "r") as file:
+    """Display all student records."""
+    with open(FILENAME, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
     if not lines:
@@ -35,12 +44,12 @@ def display_students():
     print()
 
 
-# Search Student
 def search_student():
+    """Search for a student by name."""
     search_name = input("Enter name to search: ")
     found = False
 
-    with open(FILENAME, "r") as file:
+    with open(FILENAME, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
     for line in lines:
@@ -54,16 +63,16 @@ def search_student():
         print("Student not found.\n")
 
 
-# Update Student Grade
 def update_student():
+    """Update grade of an existing student."""
     update_name = input("Enter name to update: ")
     new_grade = input("Enter new grade: ")
     updated = False
 
-    with open(FILENAME, "r") as file:
+    with open(FILENAME, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
-    with open(FILENAME, "w") as file:
+    with open(FILENAME, "w", encoding="utf-8") as file:
         for line in lines:
             name, age, grade = line.strip().split(",")
             if name.lower() == update_name.lower():
@@ -78,17 +87,17 @@ def update_student():
         print("Student not found.\n")
 
 
-# Delete Student
 def delete_student():
+    """Delete a student record by name."""
     delete_name = input("Enter name to delete: ")
     deleted = False
 
-    with open(FILENAME, "r") as file:
+    with open(FILENAME, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
-    with open(FILENAME, "w") as file:
+    with open(FILENAME, "w", encoding="utf-8") as file:
         for line in lines:
-            name, age, grade = line.strip().split(",")
+            name, _, _ = line.strip().split(",")
             if name.lower() != delete_name.lower():
                 file.write(line)
             else:
@@ -100,30 +109,35 @@ def delete_student():
         print("Student not found.\n")
 
 
-# Main Menu Loop
-while True:
-    print("===== Student Record System =====")
-    print("1. Add Student")
-    print("2. Display All Students")
-    print("3. Search Student")
-    print("4. Update Student Grade")
-    print("5. Delete Student")
-    print("6. Exit")
+def main():
+    """Main menu loop for the program."""
+    while True:
+        print("===== Student Record System =====")
+        print("1. Add Student")
+        print("2. Display All Students")
+        print("3. Search Student")
+        print("4. Update Student Grade")
+        print("5. Delete Student")
+        print("6. Exit")
 
-    choice = input("Enter your choice (1-6): ")
+        choice = input("Enter your choice (1-6): ")
 
-    if choice == "1":
-        add_student()
-    elif choice == "2":
-        display_students()
-    elif choice == "3":
-        search_student()
-    elif choice == "4":
-        update_student()
-    elif choice == "5":
-        delete_student()
-    elif choice == "6":
-        print("Exiting program...")
-        break
-    else:
-        print("Invalid choice! Please try again.\n")
+        if choice == "1":
+            add_student()
+        elif choice == "2":
+            display_students()
+        elif choice == "3":
+            search_student()
+        elif choice == "4":
+            update_student()
+        elif choice == "5":
+            delete_student()
+        elif choice == "6":
+            print("Exiting program...")
+            break
+        else:
+            print("Invalid choice! Please try again.\n")
+
+
+if __name__ == "__main__":
+    main()
