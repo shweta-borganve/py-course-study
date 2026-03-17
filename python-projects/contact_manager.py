@@ -22,9 +22,11 @@ from typing import List, Optional
 
 # ---------------- Data Models ---------------- #
 
+
 @dataclass
 class ContactInfo:
     """Stores personal contact details."""
+
     name: str
     phone: str
     email: str
@@ -36,6 +38,7 @@ class ContactInfo:
 @dataclass
 class ContactMeta:
     """Stores metadata about contact."""
+
     contact_id: int
     favorite: bool = False
     created: str = datetime.now().strftime("%Y-%m-%d")
@@ -44,11 +47,13 @@ class ContactMeta:
 @dataclass
 class Contact:
     """Represents a complete contact."""
+
     info: ContactInfo
     meta: ContactMeta
 
 
 # ---------------- Manager Class ---------------- #
+
 
 class ContactManager:
     """Main class responsible for managing contacts."""
@@ -140,7 +145,8 @@ class ContactManager:
         """
         query = query.lower()
         return [
-            contact for contact in self.contacts
+            contact
+            for contact in self.contacts
             if query in contact.info.name.lower()
             or query in contact.info.phone.lower()
             or query in contact.info.email.lower()
@@ -193,11 +199,7 @@ class ContactManager:
     def save_contacts(self) -> None:
         """Save all contacts to JSON file."""
         with open(self.FILE_NAME, "w", encoding="utf-8") as file:
-            json.dump(
-                [asdict(contact) for contact in self.contacts],
-                file,
-                indent=4
-            )
+            json.dump([asdict(contact) for contact in self.contacts], file, indent=4)
 
     def load_contacts(self) -> None:
         """Load contacts from JSON file."""
@@ -218,26 +220,37 @@ class ContactManager:
         """Export contacts to CSV file."""
         with open("contacts.csv", "w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
-            writer.writerow([
-                "ID", "Name", "Phone", "Email",
-                "Address", "Birthday", "Category",
-                "Favorite", "Created"
-            ])
+            writer.writerow(
+                [
+                    "ID",
+                    "Name",
+                    "Phone",
+                    "Email",
+                    "Address",
+                    "Birthday",
+                    "Category",
+                    "Favorite",
+                    "Created",
+                ]
+            )
             for contact in self.contacts:
-                writer.writerow([
-                    contact.meta.contact_id,
-                    contact.info.name,
-                    contact.info.phone,
-                    contact.info.email,
-                    contact.info.address,
-                    contact.info.birthday,
-                    contact.info.category,
-                    contact.meta.favorite,
-                    contact.meta.created,
-                ])
+                writer.writerow(
+                    [
+                        contact.meta.contact_id,
+                        contact.info.name,
+                        contact.info.phone,
+                        contact.info.email,
+                        contact.info.address,
+                        contact.info.birthday,
+                        contact.info.category,
+                        contact.meta.favorite,
+                        contact.meta.created,
+                    ]
+                )
 
 
 # ---------------- Main Function ---------------- #
+
 
 def main() -> None:
     """Run command-line interface for Contact Manager."""
