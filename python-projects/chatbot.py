@@ -63,7 +63,10 @@ class Chatbot:
     def _safe_calculate(self, text):
         """Perform safe arithmetic calculation."""
         response = "Invalid expression."
-        match = re.search(r"(\d+)\s*([+\-*/])\s*(\d+)", text)
+        match = re.search(
+            r"(\d+)\s*([+\-*/])\s*(\d+)",
+            text,
+        )
 
         if match:
             num1, operator, num2 = match.groups()
@@ -102,15 +105,20 @@ class Chatbot:
         elif "my name is" in text:
             name = user_input.split()[-1].capitalize()
             self.user_info["name"] = name
-            response = f"Nice to meet you, {name}!"
+            response = (
+                f"Nice to meet you, {name}!"
+            )
 
         elif "what is my name" in text:
             response = self.user_info.get(
-                "name", "I don't know your name yet."
+                "name",
+                "I don't know your name yet.",
             )
 
         elif "add todo" in text:
-            task = user_input.replace("add todo", "").strip()
+            task = user_input.replace(
+                "add todo", ""
+            ).strip()
             self.todos.append(task)
             response = f"Added: {task}"
 
@@ -121,26 +129,38 @@ class Chatbot:
                 response = "Todo list is empty."
 
         elif "time" in text:
-            response = datetime.now().strftime("Time: %I:%M %p")
+            response = datetime.now().strftime(
+                "Time: %I:%M %p"
+            )
 
         elif "date" in text:
-            response = datetime.now().strftime("Date: %B %d, %Y")
+            response = datetime.now().strftime(
+                "Date: %B %d, %Y"
+            )
 
         else:
-            response = self._random_response("unknown")
+            response = self._random_response(
+                "unknown"
+            )
 
         return response
 
     # ---------------- RUN ---------------- #
     def run(self):
         """Run chatbot loop safely."""
-        print(f"{self.name} started. Type 'exit' to quit.")
+        print(
+            f"{self.name} started. "
+            "Type 'exit' to quit."
+        )
 
         while True:
             try:
                 user_input = input("You: ")
             except OSError:
-                print("Input not supported in this environment.")
+                print(
+                    "Input not supported "
+                    "in this environment."
+                )
                 break
             except KeyboardInterrupt:
                 print("\nExiting chatbot.")
