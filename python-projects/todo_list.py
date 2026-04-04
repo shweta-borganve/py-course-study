@@ -1,7 +1,7 @@
 """
 Simple To-Do List Manager
 
-This program allows users to:
+Features:
 - Add tasks with priority
 - View tasks
 - Mark tasks as complete
@@ -14,30 +14,40 @@ import json
 from datetime import datetime
 
 TASKS_FILE = "tasks.json"
+VALID_PRIORITIES = {"High", "Medium", "Low"}
 
 
 def load_tasks():
     """Load tasks from JSON file."""
     try:
-        with open(TASKS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with open(TASKS_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
     except FileNotFoundError:
         return []
 
 
 def save_tasks(tasks):
     """Save tasks to JSON file."""
-    with open(TASKS_FILE, "w", encoding="utf-8") as f:
-        json.dump(tasks, f, indent=4)
+    with open(TASKS_FILE, "w", encoding="utf-8") as file:
+        json.dump(tasks, file, indent=4)
+
+
+def generate_id(tasks):
+    """Generate unique task ID."""
+    return max((task["id"] for task in tasks), default=0) + 1
 
 
 def add_task(tasks):
     """Add a new task."""
-    description = input("Enter task description: ")
-    priority = input("Enter priority (High/Medium/Low): ")
+    description = input("Enter task description: ").strip()
+    priority = input("Enter priority (High/Medium/Low): ").capitalize()
+
+    if priority not in VALID_PRIORITIES:
+        print("Invalid priority. Setting to 'Low'.")
+        priority = "Low"
 
     task = {
-        "id": len(tasks) + 1,
+        "id": generate_id(tasks),
         "description": description,
         "priority": priority,
         "completed": False,
@@ -46,7 +56,7 @@ def add_task(tasks):
 
     tasks.append(task)
     save_tasks(tasks)
-    print("Task added successfully!")
+    print("✅ Task added successfully!")
 
 
 def view_tasks(tasks):
@@ -55,48 +65,54 @@ def view_tasks(tasks):
         print("No tasks found.")
         return
 
+    print("\n--- Task List ---")
     for task in tasks:
-        status = "Done" if task["completed"] else "Pending"
+        status = "✔ Done" if task["completed"] else "⏳ Pending"
         print(
-            f"{task['id']}. {task['description']} " f"({task['priority']}) - {status}"
+            f"{task['id']}. {task['description']} " f"[{task['priority']}] - {status}"
         )
 
 
 def mark_complete(tasks):
     """Mark a task as completed."""
     try:
-        task_id = int(input("Enter task ID to mark complete: "))
+        task_id = int(input("Enter task ID: "))
     except ValueError:
-        print("Invalid ID.")
+        print("Invalid input.")
         return
+
+    found = False
 
     for task in tasks:
         if task["id"] == task_id:
             task["completed"] = True
-            save_tasks(tasks)
-            print("Task marked as complete!")
-            return
+            found = True
+            break
 
-    print("Task not found.")
+    if found:
+        save_tasks(tasks)
+        print("✅ Task marked as complete!")
+    else:
+        print("Task not found.")
 
 
 def delete_task(tasks):
-    """Delete a task by ID."""
+    """Delete a task."""
     try:
-        task_id = int(input("Enter task ID to delete: "))
+        task_id = int(input("Enter task ID: "))
     except ValueError:
-        print("Invalid ID.")
+        print("Invalid input.")
         return
 
-    updated_tasks = [task for task in tasks if task["id"] != task_id]
+    initial_length = len(tasks)
 
-    if len(updated_tasks) == len(tasks):
-        print("Task not found.")
+    tasks[:] = [task for task in tasks if task["id"] != task_id]
+
+    if len(tasks) < initial_length:
+        save_tasks(tasks)
+        print("🗑 Task deleted.")
     else:
-        save_tasks(updated_tasks)
-        tasks.clear()
-        tasks.extend(updated_tasks)
-        print("Task deleted.")
+        print("Task not found.")
 
 
 def show_statistics(tasks):
@@ -105,14 +121,14 @@ def show_statistics(tasks):
     completed = sum(task["completed"] for task in tasks)
     pending = total - completed
 
-    print("=== Statistics ===")
-    print("Total tasks:", total)
-    print("Completed:", completed)
-    print("Pending:", pending)
+    print("\n=== Statistics ===")
+    print(f"Total Tasks : {total}")
+    print(f"Completed   : {completed}")
+    print(f"Pending     : {pending}")
 
 
 def main():
-    """Main menu loop."""
+    """Main menu."""
     tasks = load_tasks()
 
     while True:
@@ -124,7 +140,7 @@ def main():
         print("5. Show Statistics")
         print("6. Exit")
 
-        choice = input("Choose option: ")
+        choice = input("Choose option: ").strip()
 
         if choice == "1":
             add_task(tasks)
@@ -137,9 +153,10 @@ def main():
         elif choice == "5":
             show_statistics(tasks)
         elif choice == "6":
+            print("Exiting... 👋")
             break
         else:
-            print("Invalid choice")
+            print("Invalid choice. Try again.")
 
 
 if __name__ == "__main__":

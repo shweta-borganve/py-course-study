@@ -1,0 +1,41 @@
+{
+    "movies": {
+        "Inception": {
+            "title": "Inception",
+            "year": 2010,
+            "genres": [
+                "Sci-Fi",
+                "Action"
+            ],
+            "director": "Christopher Nolan",
+            "actors": [
+                "Leonardo DiCaprio"
+            ],
+            "plot": "Dream within a dream",
+            "ratings": [
+                9
+            ],
+            "reviews": [
+                {
+                    "user": "shweta",
+                    "review": "Amazing movie!"
+                }
+            ]
+        }
+    },
+    "users": {
+        "shweta": {
+            "username": "shweta",
+            "history": [
+                "Inception"
+            ],
+            "preferences": [],
+            "ratings": {
+                "Inception": 9
+            },
+            "reviews": {
+                "Inception": "Amazing movie!"
+            }
+        }
+    }
+}
