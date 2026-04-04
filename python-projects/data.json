@@ -1,0 +1,23 @@
+{
+    "movies": {
+        "durandar": {
+            "title": "durandar",
+            "year": 2026,
+            "genres": [
+                "action"
+            ],
+            "director": "xyz",
+            "ratings": [
+                9
+            ]
+        }
+    },
+    "users": {
+        "sss": {
+            "name": "sss",
+            "history": [
+                "durandar"
+            ]
+        }
+    }
+}

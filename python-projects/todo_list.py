@@ -51,9 +51,7 @@ def add_task(tasks):
         "description": description,
         "priority": priority,
         "completed": False,
-        "created_date": datetime.now().strftime(
-            "%Y-%m-%d %H:%M"
-        ),
+        "created_date": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
 
     tasks.append(task)
@@ -71,8 +69,7 @@ def view_tasks(tasks):
     for task in tasks:
         status = "✔ Done" if task["completed"] else "⏳ Pending"
         print(
-            f"{task['id']}. {task['description']} "
-            f"[{task['priority']}] - {status}"
+            f"{task['id']}. {task['description']} " f"[{task['priority']}] - {status}"
         )
 
 
@@ -109,9 +106,7 @@ def delete_task(tasks):
 
     initial_length = len(tasks)
 
-    tasks[:] = [
-        task for task in tasks if task["id"] != task_id
-    ]
+    tasks[:] = [task for task in tasks if task["id"] != task_id]
 
     if len(tasks) < initial_length:
         save_tasks(tasks)
