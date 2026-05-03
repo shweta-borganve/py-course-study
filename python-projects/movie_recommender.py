@@ -63,14 +63,8 @@ class MovieSystem:
     def save(self):
         """Save data."""
         data = {
-            "movies": {
-                k: v.to_dict()
-                for k, v in self.movies.items()
-            },
-            "users": {
-                k: v.to_dict()
-                for k, v in self.users.items()
-            },
+            "movies": {k: v.to_dict() for k, v in self.movies.items()},
+            "users": {k: v.to_dict() for k, v in self.users.items()},
         }
 
         with open(self.file_name, "w", encoding="utf-8") as file:
@@ -108,12 +102,7 @@ class MovieSystem:
         genres = input("Genres (comma): ").split(",")
         director = input("Director: ")
 
-        self.movies[title] = Movie(
-            title,
-            year,
-            genres,
-            director
-        )
+        self.movies[title] = Movie(title, year, genres, director)
         print("Movie added!")
 
     def show_movies(self):
@@ -123,10 +112,7 @@ class MovieSystem:
             return
 
         for movie in self.movies.values():
-            print(
-                f"{movie.title} ({movie.year}) - "
-                f"Rating: {movie.avg_rating()}"
-            )
+            print(f"{movie.title} ({movie.year}) - " f"Rating: {movie.avg_rating()}")
 
     # ---------- USERS ----------
 
@@ -162,9 +148,7 @@ class MovieSystem:
         keyword = input("Search title: ").lower()
 
         results = [
-            movie
-            for movie in self.movies.values()
-            if keyword in movie.title.lower()
+            movie for movie in self.movies.values() if keyword in movie.title.lower()
         ]
 
         if not results:
