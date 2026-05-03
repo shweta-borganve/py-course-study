@@ -1,46 +1,79 @@
-# Temperature Conversion Program
+"""
+Temperature Converter Program
+
+This module provides functions to convert temperature
+between Celsius, Fahrenheit, and Kelvin.
+"""
 
 
-# Function 1: Celsius to Fahrenheit
 def celsius_to_fahrenheit(celsius):
-    fahrenheit = (celsius * 9 / 5) + 32
-    return fahrenheit
+    """
+    Convert temperature from Celsius to Fahrenheit.
+
+    Args:
+        celsius (float): Temperature in Celsius.
+
+    Returns:
+        float: Temperature in Fahrenheit.
+    """
+    return (celsius * 9 / 5) + 32
 
 
-# Function 2: Fahrenheit to Celsius
 def fahrenheit_to_celsius(fahrenheit):
-    celsius = (fahrenheit - 32) * 5 / 9
-    return celsius
+    """
+    Convert temperature from Fahrenheit to Celsius.
+
+    Args:
+        fahrenheit (float): Temperature in Fahrenheit.
+
+    Returns:
+        float: Temperature in Celsius.
+    """
+    return (fahrenheit - 32) * 5 / 9
 
 
-# Function 3: Celsius to Kelvin
 def celsius_to_kelvin(celsius):
-    kelvin = celsius + 273.15
-    return kelvin
+    """
+    Convert temperature from Celsius to Kelvin.
+
+    Args:
+        celsius (float): Temperature in Celsius.
+
+    Returns:
+        float: Temperature in Kelvin.
+    """
+    return celsius + 273.15
 
 
-# Main Program
-print("Temperature Conversion Program")
-print("1. Celsius to Fahrenheit")
-print("2. Fahrenheit to Celsius")
-print("3. Celsius to Kelvin")
+def main():
+    """
+    Main function to run the temperature conversion program.
+    """
+    print("Temperature Conversion Program")
+    print("1. Celsius to Fahrenheit")
+    print("2. Fahrenheit to Celsius")
+    print("3. Celsius to Kelvin")
 
-choice = input("Enter your choice (1/2/3): ")
+    choice = input("Enter your choice (1/2/3): ")
 
-if choice == "1":
-    c = float(input("Enter temperature in Celsius: "))
-    result = celsius_to_fahrenheit(c)
-    print("Temperature in Fahrenheit is:", result)
+    if choice == "1":
+        celsius = float(input("Enter temperature in Celsius: "))
+        result = celsius_to_fahrenheit(celsius)
+        print("Temperature in Fahrenheit is:", result)
 
-elif choice == "2":
-    f = float(input("Enter temperature in Fahrenheit: "))
-    result = fahrenheit_to_celsius(f)
-    print("Temperature in Celsius is:", result)
+    elif choice == "2":
+        fahrenheit = float(input("Enter temperature in Fahrenheit: "))
+        result = fahrenheit_to_celsius(fahrenheit)
+        print("Temperature in Celsius is:", result)
 
-elif choice == "3":
-    c = float(input("Enter temperature in Celsius: "))
-    result = celsius_to_kelvin(c)
-    print("Temperature in Kelvin is:", result)
+    elif choice == "3":
+        celsius = float(input("Enter temperature in Celsius: "))
+        result = celsius_to_kelvin(celsius)
+        print("Temperature in Kelvin is:", result)
 
-else:
-    print("Invalid choice! Please select 1, 2, or 3.")
+    else:
+        print("Invalid choice! Please select 1, 2, or 3.")
+
+
+if __name__ == "__main__":
+    main()

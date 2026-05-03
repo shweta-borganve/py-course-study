@@ -1,4 +1,14 @@
-# Student Grade Management Program
+"""
+Student Grade Management Program.
+
+This program allows users to:
+1. Add students and their grades.
+2. View all students.
+3. Calculate average grade.
+4. Find highest grade.
+5. Find lowest grade.
+6. Exit the program.
+"""
 
 # Dictionary to store student name and grade
 grades = {}
@@ -14,14 +24,14 @@ while True:
 
     choice = input("Enter your choice (1-6): ")
 
-    # 1️ Add Student
+    # 1. Add Student
     if choice == "1":
         name = input("Enter student name: ")
         grade = float(input("Enter student grade: "))
         grades[name] = grade
         print("Student added successfully!")
 
-    # 2️ View All Students
+    # 2. View All Students
     elif choice == "2":
         if len(grades) == 0:
             print("No students available.")
@@ -30,7 +40,7 @@ while True:
             for name, grade in grades.items():
                 print(name, ":", grade)
 
-    # 3️ Average Grade
+    # 3. Average Grade
     elif choice == "3":
         if len(grades) == 0:
             print("No students available.")
@@ -38,7 +48,7 @@ while True:
             average = sum(grades.values()) / len(grades)
             print("Average Grade is:", average)
 
-    # 4️ Highest Grade
+    # 4. Highest Grade
     elif choice == "4":
         if len(grades) == 0:
             print("No students available.")
@@ -48,7 +58,7 @@ while True:
                 if grade == highest:
                     print("Highest Grade is", highest, "by", name)
 
-    # 5️ Lowest Grade
+    # 5. Lowest Grade
     elif choice == "5":
         if len(grades) == 0:
             print("No students available.")
@@ -58,7 +68,7 @@ while True:
                 if grade == lowest:
                     print("Lowest Grade is", lowest, "by", name)
 
-    # 6️ Exit
+    # 6. Exit
     elif choice == "6":
         print("Exiting Program... Thank You!")
         break
